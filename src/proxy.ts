@@ -4,7 +4,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CookieToSet = { name: string; value: string; options?: Record<string, any> };
 
-export async function middleware(request: NextRequest) {
+// Next.js 16 uses "proxy" instead of "middleware"
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -34,6 +35,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // Protected routes — redirect to /auth if not signed in
   const protectedPaths = ['/trade', '/portfolio', '/leaderboard'];
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
 
@@ -43,6 +45,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // If signed in and visiting /auth, redirect to market
   if (user && pathname === '/auth') {
     const url = request.nextUrl.clone();
     url.pathname = '/market';
