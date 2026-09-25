@@ -1,0 +1,11 @@
+{
+  "session-capture": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File .agents/capture_turn.ps1",
+        "timeout": 30
+      }
+    ]
+  }
+}
