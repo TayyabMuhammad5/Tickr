@@ -326,11 +326,6 @@ export default function MarketPage() {
           </table>
         </div>
       )}
-
-      {/* Footer note */}
-      <p className="text-xs text-muted" style={{ marginTop: '1rem', textAlign: 'right' }}>
-        Prices sourced from CoinGecko via Tickr's own database. The frontend never calls CoinGecko directly.
-      </p>
     </div>
   );
 }

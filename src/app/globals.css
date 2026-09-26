@@ -109,7 +109,6 @@ h4 { font-size: 1rem; font-weight: 600; }
 }
 
 .main-content {
-  padding-top: var(--nav-height);
   flex: 1;
 }
 
@@ -263,6 +262,7 @@ h4 { font-size: 1rem; font-weight: 600; }
   font-size: 0.8125rem;
   color: var(--paper-text);
   font-weight: 500;
+  margin-top: var(--nav-height);
 }
 
 /* ─── Cards ──────────────────────────────────────────────────────────── */
