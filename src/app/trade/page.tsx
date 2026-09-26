@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import TradePageClient from './TradePageClient';
 
 export const metadata = {
-  title: 'Trade — Tickr Paper Trading',
+  title: 'Trade | Tickr Paper Trading',
   description: 'Buy and sell cryptocurrency with your practice cash balance.',
 };
 

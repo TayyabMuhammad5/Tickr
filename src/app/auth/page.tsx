@@ -61,14 +61,14 @@ export default function AuthPage() {
         <p className="auth-subtitle">
           {mode === 'signin'
             ? 'Sign in to your Tickr account'
-            : 'Create a free account — get $10,000 in practice cash'}
+            : 'Create a free account and get $10,000 in practice cash'}
         </p>
 
         {/* Paper trading notice */}
         <div className="alert alert-info" style={{ marginBottom: '1.5rem' }}>
           <span aria-hidden="true">🎓</span>
           <span>
-            <strong>Paper trading only</strong> — this is a simulator. No real
+            <strong>Paper trading only:</strong> this is a simulator. No real
             money is involved at any point.
           </span>
         </div>

@@ -297,7 +297,7 @@ export default function TradePageClient() {
             {submitting ? (
               <><span className="spinner" aria-hidden="true" /> Processing…</>
             ) : (
-              <>{side === 'buy' ? '▲ Buy' : '▼ Sell'} {coin.symbol}{total !== null && quantity > 0 ? ` — ${formatUsd(total)}` : ''}</>
+              <>{side === 'buy' ? '▲ Buy' : '▼ Sell'} {coin.symbol}{total !== null && quantity > 0 ? ` • ${formatUsd(total)}` : ''}</>
             )}
           </button>
         </div>
@@ -336,7 +336,7 @@ export default function TradePageClient() {
           </div>
           <div className="card card-sm">
             <p className="text-xs text-muted" style={{ lineHeight: '1.6' }}>
-              <strong style={{ color: 'var(--paper-text)' }}>Practice mode</strong> — all trades are simulated. No real money is involved.
+              <strong style={{ color: 'var(--paper-text)' }}>Practice mode:</strong> all trades are simulated. No real money is involved.
             </p>
           </div>
         </div>

@@ -167,7 +167,7 @@ export default function MarketPage() {
         <div>
           <h1>Market</h1>
           <p className="text-secondary text-sm" style={{ marginTop: '0.375rem' }}>
-            Live prices for 5 cryptocurrencies — updates stream in real time
+            Live prices for 5 cryptocurrencies, updates stream in real time
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>

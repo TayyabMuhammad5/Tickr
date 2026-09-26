@@ -3,12 +3,12 @@ import './globals.css';
 import { Nav } from '@/components/Nav';
 
 export const metadata: Metadata = {
-  title: 'Tickr — Paper Trading Simulator',
+  title: 'Tickr | Paper Trading Simulator',
   description:
     'Practice crypto trading with real live prices and zero real money. Tickr is a paper-trading simulator powered by live CoinGecko market data.',
   keywords: ['paper trading', 'crypto simulator', 'bitcoin', 'ethereum', 'practice trading'],
   openGraph: {
-    title: 'Tickr — Paper Trading Simulator',
+    title: 'Tickr | Paper Trading Simulator',
     description: 'Trade real live crypto prices with fake money. No risk, real prices.',
     type: 'website',
   },
