@@ -109,6 +109,7 @@ h4 { font-size: 1rem; font-weight: 600; }
 }
 
 .main-content {
+  padding-top: var(--nav-height);
   flex: 1;
 }
 

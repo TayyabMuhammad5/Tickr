@@ -90,14 +90,6 @@ export function Nav() {
           </div>
         </div>
       </nav>
-
-      {/* Full-width paper trading banner */}
-      <div className="paper-banner" role="banner" aria-label="Paper trading notice">
-        <span aria-hidden="true">🎓</span>
-        <strong>Paper Trading</strong>
-        <span>—</span>
-        <span>Simulated trades with real live prices. No real money involved.</span>
-      </div>
     </>
   );
 }
