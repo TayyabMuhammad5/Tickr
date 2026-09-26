@@ -14,7 +14,7 @@ interface PriceState {
 
 type PriceStates = Record<string, PriceState>;
 
-/** Attempt to trigger on-demand ingestion if prices are stale */
+/** Attempt to trigger on-demand ingestion — never throws */
 async function ensureFreshPrices() {
   try {
     await fetch('/api/ingest', { method: 'GET' });
@@ -22,6 +22,9 @@ async function ensureFreshPrices() {
     // Swallow — non-critical
   }
 }
+
+/** How often the page actively requests a new price snapshot (ms) */
+const INGEST_INTERVAL_MS = 60_000;
 
 export default function MarketPage() {
   const [priceStates, setPriceStates] = useState<PriceStates>({});
@@ -76,6 +79,12 @@ export default function MarketPage() {
 
   useEffect(() => {
     loadInitialPrices();
+
+    // Vercel Hobby cron only runs daily, so the page itself triggers
+    // ingestion every 60 s while it is open. Supabase Realtime delivers
+    // the new rows to ALL open tabs the moment they are inserted.
+    ensureFreshPrices(); // fire immediately on mount too
+    const ingestInterval = setInterval(ensureFreshPrices, INGEST_INTERVAL_MS);
 
     const supabase = createClient();
 
@@ -132,6 +141,7 @@ export default function MarketPage() {
       });
 
     return () => {
+      clearInterval(ingestInterval);
       supabase.removeChannel(channel);
       // Clear all flash timers
       Object.values(flashTimers.current).forEach(clearTimeout);

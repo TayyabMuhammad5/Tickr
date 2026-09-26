@@ -26,21 +26,29 @@ The RPC fetches the price from `price_snapshots` itself (the latest row). If the
 
 ## 2. How price ingestion is triggered
 
-**Primary: Vercel Cron (`vercel.json`)**
+**Primary: On-demand interval from the Market page**
 
-```json
-{ "crons": [{ "path": "/api/ingest", "schedule": "* * * * *" }] }
+Vercel's **Hobby (free) tier** only supports cron jobs that run **once per day** — not every minute as originally planned. The `vercel.json` cron is set to `0 0 * * *` (daily at midnight UTC) as a safety net.
+
+Instead, the Market page itself calls `GET /api/ingest` every **60 seconds** via `setInterval` while it is open in a browser tab. The flow is:
+
+```
+Market page mounts
+  → calls /api/ingest immediately (on mount)
+  → then every 60s via setInterval
+      → fetches CoinGecko prices
+      → inserts into price_snapshots
+      → Supabase Realtime fires → ALL open tabs update instantly
+  → cleans up interval on unmount
 ```
 
-Vercel's free Hobby tier supports cron jobs, firing `GET /api/ingest` every minute. Vercel sets an `x-vercel-cron: 1` header on internally triggered calls, which the route checks alongside the `CRON_SECRET` for manually triggered calls.
+**Why on-demand over pure daily cron**: A daily cron alone would make prices 24 hours stale. The page-driven interval ensures prices update every ~60 seconds whenever anyone is actively using the app, which is exactly when live prices matter most.
 
-This is a true scheduled execution — prices update even when no browser tab is open, keeping leaderboard rankings and realtime subscriptions fresh.
+**Why not a dedicated background worker**: Would require a paid hosting tier. The on-demand approach is free, simple, and achieves the same UX since the Realtime subscription delivers updates to all open tabs the moment the insert happens.
 
-**Secondary: On-demand fallback**
+**Secondary: Daily Vercel Cron**
 
-When the Market page loads, if the most recent `price_snapshots` row is older than 55 seconds, the browser fires `GET /api/ingest` in the background (no `await`, best-effort). This covers cold-start scenarios where the cron hasn't fired yet for a fresh deployment.
-
-**Why Vercel Cron over pure on-demand**: On-demand ingestion only fires when someone loads a page. If no one visits for several minutes, prices go stale. The cron ensures prices are always fresh, which matters for the leaderboard's computed total values and for the realism of the trading simulation.
+`vercel.json` still has `"schedule": "0 0 * * *"` as a once-daily fallback — this ensures at least one fresh price snapshot exists even if no one visited the site that day.
 
 **Error handling**: If CoinGecko returns a non-2xx response (rate limit, outage), the route logs the error and returns HTTP 200 to Vercel (to avoid being marked as a cron failure on a temporary rate limit). **No fabricated prices are ever written.** If the response is missing a coin's price, that coin is silently skipped for that cycle.
 
