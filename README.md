@@ -8,7 +8,7 @@ Tickr is a full-stack paper-trading simulator built with **Next.js 15**, **Supab
 
 ## Live Demo
 
-🌐 **[tickr.vercel.app](https://tickr.vercel.app)** ← deployed URL
+🌐 **[tickr.vercel.app](tickr-blond-two.vercel.app)** ← deployed URL
 
 ### Demo credentials (pre-seeded)
 
