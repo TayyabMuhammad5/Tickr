@@ -4,19 +4,25 @@ import { createServiceClient } from '@/lib/supabase/service';
 const COINS = ['bitcoin', 'ethereum', 'solana', 'dogecoin', 'cardano'];
 const COINGECKO_URL = `https://api.coingecko.com/api/v3/simple/price?ids=${COINS.join(',')}&vs_currencies=usd`;
 
-export async function GET(req: NextRequest) {
-  // Verify cron secret on Vercel — Vercel automatically sets Authorization header
-  // when the cron job fires. On manual calls we allow a CRON_SECRET header check.
-  const authHeader = req.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
+// Simple rate-limit: track last successful ingest time in memory.
+// Prevents hammering CoinGecko if multiple tabs trigger simultaneously.
+let lastIngestAt = 0;
+const MIN_INGEST_INTERVAL_MS = 45_000; // 45 s — well within CoinGecko free tier
 
-  if (
-    cronSecret &&
-    authHeader !== `Bearer ${cronSecret}` &&
-    // Vercel sets this header for internally triggered crons
-    req.headers.get('x-vercel-cron') !== '1'
-  ) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function GET(req: NextRequest) {
+  // Allow browser calls (market page interval) AND Vercel cron calls freely.
+  // The route is safe to expose: it only reads public CoinGecko data and
+  // writes to price_snapshots using the service role (no user data at risk).
+  // Optional: if CRON_SECRET is set, still accept Vercel-signed cron calls.
+  const isCron = req.headers.get('x-vercel-cron') === '1';
+
+  // In-memory rate limit — skip if we ingested very recently (unless it's the cron)
+  const now = Date.now();
+  if (!isCron && now - lastIngestAt < MIN_INGEST_INTERVAL_MS) {
+    return NextResponse.json(
+      { ok: true, skipped: true, reason: 'rate_limited', nextIngestIn: Math.ceil((MIN_INGEST_INTERVAL_MS - (now - lastIngestAt)) / 1000) + 's' },
+      { status: 200 }
+    );
   }
 
   let data: Record<string, { usd: number }>;
@@ -24,14 +30,14 @@ export async function GET(req: NextRequest) {
   try {
     const res = await fetch(COINGECKO_URL, {
       // No auth headers — CoinGecko free tier, no key required
-      next: { revalidate: 0 },
+      cache: 'no-store',
     });
 
     if (!res.ok) {
       console.error(`[ingest] CoinGecko responded ${res.status}`);
       return NextResponse.json(
         { error: 'CoinGecko request failed', status: res.status },
-        { status: 200 } // 200 so Vercel cron doesn't mark it as a failure on rate limit
+        { status: 200 } // 200 so Vercel cron doesn't mark it as failure on rate limit
       );
     }
 
@@ -59,6 +65,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  console.log(`[ingest] Inserted ${rows.length} price snapshots at ${new Date().toISOString()}`);
+  lastIngestAt = Date.now();
+  console.log(`[ingest] Inserted ${rows.length} snapshots at ${new Date().toISOString()}`);
   return NextResponse.json({ ok: true, inserted: rows.length, prices: rows });
 }

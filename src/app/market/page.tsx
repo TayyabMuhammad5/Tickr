@@ -15,11 +15,19 @@ interface PriceState {
 type PriceStates = Record<string, PriceState>;
 
 /** Attempt to trigger on-demand ingestion — never throws */
-async function ensureFreshPrices() {
+async function ensureFreshPrices(onError?: (msg: string) => void) {
   try {
-    await fetch('/api/ingest', { method: 'GET' });
-  } catch {
-    // Swallow — non-critical
+    const res = await fetch('/api/ingest', { method: 'GET' });
+    const json = await res.json().catch(() => ({}));
+    console.log('[market] ingest response:', json);
+    if (!res.ok && json.error) {
+      onError?.(json.error);
+    } else {
+      onError?.(null as unknown as string); // clear error
+    }
+  } catch (err) {
+    console.error('[market] ingest fetch failed:', err);
+    onError?.('Could not reach /api/ingest');
   }
 }
 
@@ -30,6 +38,7 @@ export default function MarketPage() {
   const [priceStates, setPriceStates] = useState<PriceStates>({});
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [connected, setConnected] = useState(false);
+  const [ingestError, setIngestError] = useState<string | null>(null);
   const flashTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   // Fetch initial prices from DB
@@ -83,8 +92,9 @@ export default function MarketPage() {
     // Vercel Hobby cron only runs daily, so the page itself triggers
     // ingestion every 60 s while it is open. Supabase Realtime delivers
     // the new rows to ALL open tabs the moment they are inserted.
-    ensureFreshPrices(); // fire immediately on mount too
-    const ingestInterval = setInterval(ensureFreshPrices, INGEST_INTERVAL_MS);
+    const triggerIngest = () => ensureFreshPrices((err) => setIngestError(err));
+    triggerIngest(); // fire immediately on mount
+    const ingestInterval = setInterval(triggerIngest, INGEST_INTERVAL_MS);
 
     const supabase = createClient();
 
@@ -157,7 +167,7 @@ export default function MarketPage() {
         <div>
           <h1>Market</h1>
           <p className="text-secondary text-sm" style={{ marginTop: '0.375rem' }}>
-            Live prices for 5 cryptocurrencies — updated every minute
+            Live prices for 5 cryptocurrencies — updates stream in real time
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -173,6 +183,17 @@ export default function MarketPage() {
           )}
         </div>
       </div>
+
+      {/* Ingest error banner — shows when /api/ingest fails */}
+      {ingestError && (
+        <div className="alert alert-error" style={{ marginBottom: '1rem' }} role="alert">
+          <span aria-hidden="true">⚠</span>
+          <span>
+            <strong>Price fetch error:</strong> {ingestError}.{' '}
+            Check that your Supabase env vars are set and the schema has been run.
+          </span>
+        </div>
+      )}
 
       {/* Price Table */}
       {!hasAnyPrice ? (
